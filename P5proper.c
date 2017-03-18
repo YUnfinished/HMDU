@@ -3,7 +3,9 @@
 #include <time.h>
 #include <stdbool.h>
 #include <stdlib.h>
+#include <unistd.h>
 #define STRLEN  50
+
 struct time
 {
     int days;
@@ -13,10 +15,17 @@ struct time
 int main (void)
 {
     void outputResult (struct tm P5Time);
+    void createBatchfiles (void);
     struct tm DesiredDate;
 
     DesiredDate = (struct tm) {.tm_mday = 4, .tm_mon = 4, .tm_year = 117};  //Defining the desired date. Could also be done by the user. (By having outputResult take an argument)
     outputResult (DesiredDate);
+
+    #ifndef BATCREATED
+        #define BATCREATED
+        createBatchfiles();
+    #endif // BATCREATED
+
     return 0;
 }
 
@@ -113,6 +122,52 @@ void outputResult (struct tm P5Time)
 
 }
 
+void createStartupBat (void)  //Determines the path of the startup folder so the batch files can be written in them. (In W7)
+{
+    FILE *buffile, *batfile;
+    buffile = fopen ("buffile.txt", "w");
+    DWORD buff = 20;
+    int stringlength = 0, i;
+    char username[buff], defUsername[buff], pathbuf[120], *chequeo;
+    bool check;
+
+    //Get User and get rid of null character
+    check = GetUserName(username, &buff);
+    if (!check)
+        printf ("Erorr. Couldn't get username.\n");
+    else
+        while (username[stringlength] != '\0'){
+            defUsername[stringlength] = username[stringlength];
+            ++stringlength;
+        }
+
+        //Print path in file to get rid of double backslash
+        fprintf( buffile, "C:\\Users\\%.*s\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup", stringlength, defUsername);
+        fclose(buffile);
+
+        //Get path from file and set it
+        buffile = fopen ("buffile.txt", "r");
+        fgets (pathbuf, 120, buffile);
+        chdir (pathbuf);
+
+        //Create batch in startup
+        batfile = fopen ("P5-2.bat", "w");
+        fprintf (batfile, "start /D \"C:\\Users\\Jack\\\" /MIN P5-1.bat");
+
+        fclose (batfile);
+        fclose (buffile);
+}
+
+void createBatchfiles (void)    //Create both batch files.
+{
+    void createStartupBat (void);
+    FILE *batfile;
+
+    batfile = fopen ("P5-1.bat", "w");
+    fprintf (batfile, "@echo off\nTIMEOUT /t 30 /nobreak\nstart /D \"C:\\Users\\Jack\\\" /B P5.exe");
+    fclose (batfile);
+    createStartupBat();
+}
 
 
 
